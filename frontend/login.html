@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Member — ASTRA AI</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <div class="auth-shell">
+    <section class="auth-brand">
+      <div class="brand-mark">A</div>
+      <h1>ASTRA AI</h1>
+      <p class="lead">Cyber Defense Platform untuk membantu member memantau alert, memahami insiden, dan merespons ancaman dengan lebih cepat.</p>
+      <ul class="feature-list">
+        <li><b>✓</b> Threat monitoring terpusat</li>
+        <li><b>✓</b> Incident analysis</li>
+        <li><b>✓</b> Security operations dashboard</li>
+      </ul>
+    </section>
+
+    <section class="auth-card">
+      <h2>Selamat datang kembali</h2>
+      <p class="muted">Login untuk mengakses ASTRA Command Center.</p>
+      <form id="loginForm">
+        <div class="field">
+          <label for="email">EMAIL</label>
+          <input id="email" type="email" autocomplete="email" placeholder="member@example.com" required>
+        </div>
+        <div class="field">
+          <label for="password">PASSWORD</label>
+          <div class="password-wrap">
+            <input id="password" type="password" autocomplete="current-password" placeholder="Masukkan password" required>
+            <button type="button" class="show-password" data-target="password">Tampilkan</button>
+          </div>
+        </div>
+        <div id="message" class="auth-message"></div>
+        <button class="auth-btn" type="submit">Masuk ke Dashboard</button>
+      </form>
+      <p class="auth-switch">Belum punya akun? <a href="register.html">Registrasi member</a></p>
+      <div class="security-note">Demo frontend: akun disimpan di browser. Untuk produksi, autentikasi harus dipindahkan ke backend dengan password hashing dan session/token yang aman.</div>
+    </section>
+  </div>
+  <script src="auth.js"></script>
+</body>
+</html>

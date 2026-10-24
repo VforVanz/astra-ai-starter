@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil Member — ASTRA AI</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <div class="auth-shell">
+    <section class="auth-brand">
+      <div class="brand-mark">A</div>
+      <h1>Member Profile</h1>
+      <p class="lead">Informasi akun yang sedang digunakan untuk mengakses ASTRA Command Center.</p>
+    </section>
+    <section class="auth-card">
+      <h2 id="profileName">Member</h2>
+      <p class="muted" id="profileEmail">-</p>
+      <div class="field"><label>ROLE</label><input id="profileRole" readonly></div>
+      <button class="auth-btn" id="backBtn">Kembali ke Dashboard</button>
+      <button class="auth-btn" id="logoutBtn" style="margin-top:10px;background:#301923;color:#ffb5bd">Keluar</button>
+    </section>
+  </div>
+  <script>
+    const session = JSON.parse(localStorage.getItem("astra_session") || "null");
+    if (!session) location.href = "login.html";
+    document.getElementById("profileName").textContent = session?.name || "Member";
+    document.getElementById("profileEmail").textContent = session?.email || "-";
+    document.getElementById("profileRole").value = session?.role || "Member";
+    document.getElementById("backBtn").onclick = () => location.href = "index.html";
+    document.getElementById("logoutBtn").onclick = () => { localStorage.removeItem("astra_session"); location.href = "login.html"; };
+  </script>
+</body>
+</html>

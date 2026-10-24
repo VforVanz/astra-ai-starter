@@ -21,14 +21,29 @@ def validate_event(event: Any) -> dict[str, Any]:
     except ValueError as exc:
         raise ValueError(f"Format timestamp tidak valid: {event['timestamp']}") from exc
 
-    event_type = str(event["event_type"]).strip().lower()
-    normalized = {
+    normalized: dict[str, Any] = {
         "timestamp": parsed.isoformat(),
         "source_ip": str(event["source_ip"]).strip(),
-        "event_type": event_type,
+        "event_type": str(event["event_type"]).strip().lower(),
         "username": str(event["username"]).strip() if event.get("username") is not None else None,
         "outcome": str(event["outcome"]).strip().lower() if event.get("outcome") is not None else None,
     }
+
+    # Web request fields are optional so existing authentication logs remain compatible.
+    for field in ("method", "path", "user_agent", "host", "referer"):
+        value = event.get(field)
+        if value is not None:
+            normalized[field] = str(value).strip()[:2048]
+    for field in ("status_code", "response_bytes", "request_bytes"):
+        value = event.get(field)
+        if value is not None:
+            try:
+                normalized[field] = int(value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"Field {field} harus berupa angka.") from exc
+    if "http_request" in normalized["event_type"] or normalized.get("method") or normalized.get("path"):
+        normalized["event_type"] = "http_request"
+
     if not normalized["source_ip"] or not normalized["event_type"]:
         raise ValueError("source_ip dan event_type tidak boleh kosong.")
     return normalized

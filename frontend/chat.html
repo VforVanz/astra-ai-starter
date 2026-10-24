@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Astra AI - Chat</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      padding: 18px 24px;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    header a {
+      color: #93c5fd;
+      text-decoration: none;
+    }
+
+    #chatMessages {
+      width: 100%;
+      max-width: 850px;
+      flex: 1;
+      margin: 0 auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message {
+      max-width: 85%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      line-height: 1.6;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: #2563eb;
+      color: white;
+    }
+
+    .assistant {
+      align-self: flex-start;
+      background: #1e293b;
+      border: 1px solid #334155;
+    }
+
+    .composer {
+      width: 100%;
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      gap: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      min-width: 0;
+      resize: vertical;
+      min-height: 52px;
+      max-height: 180px;
+      padding: 14px;
+      border: 1px solid #475569;
+      border-radius: 12px;
+      background: #1e293b;
+      color: white;
+      font: inherit;
+    }
+
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 12px;
+      background: #3b82f6;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status {
+      padding: 0 16px 12px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>✨ Astra AI</h1>
+    <a href="index.html">Kembali</a>
+  </header>
+
+  <main id="chatMessages" aria-live="polite">
+    <div class="message assistant">
+      Halo! Saya Astra AI. Ada yang bisa saya bantu?
+    </div>
+  </main>
+
+  <form id="chatForm" class="composer">
+    <textarea
+      id="chatInput"
+      placeholder="Tulis pesan untuk Astra AI..."
+      aria-label="Pesan untuk Astra AI"
+      required
+    ></textarea>
+
+    <button id="sendButton" type="submit">Kirim</button>
+  </form>
+
+  <div id="chatStatus" class="status">
+    Menghubungkan ke backend saat pesan dikirim.
+  </div>
+
+  <script>
+    "use strict";
+
+    const API_URL = "http://127.0.0.1:5000/api/chat";
+    const form = document.getElementById("chatForm");
+    const input = document.getElementById("chatInput");
+    const sendButton = document.getElementById("sendButton");
+    const messages = document.getElementById("chatMessages");
+    const status = document.getElementById("chatStatus");
+
+    let history = [];
+    let busy = false;
+
+    function addMessage(role, text) {
+      const element = document.createElement("div");
+      element.className = `message ${role}`;
+      element.textContent = text;
+      messages.appendChild(element);
+      element.scrollIntoView({ behavior: "smooth", block: "end" });
+      return element;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (busy) return;
+
+      const message = input.value.trim();
+      if (!message) return;
+
+      addMessage("user", message);
+      input.value = "";
+      busy = true;
+      sendButton.disabled = true;
+      input.disabled = true;
+      status.textContent = "Astra AI sedang berpikir...";
+
+      const replyElement = addMessage("assistant", "Sedang memproses...");
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            message,
+            history: history.slice(-12)
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || `HTTP ${response.status}`);
+        }
+
+        if (typeof data.reply !== "string" || !data.reply.trim()) {
+          throw new Error("Jawaban AI kosong.");
+        }
+
+        replyElement.textContent = data.reply;
+
+        history.push(
+          { role: "user", content: message },
+          { role: "assistant", content: data.reply }
+        );
+
+        history = history.slice(-12);
+        status.textContent = `Terhubung · Model: ${data.model || "Ollama"}`;
+      } catch (error) {
+        replyElement.textContent = `Gagal: ${error.message}`;
+        status.textContent =
+          "Periksa Flask, Ollama, dan konfigurasi CORS jika diperlukan.";
+        console.error("Astra AI error:", error);
+      } finally {
+        busy = false;
+        sendButton.disabled = false;
+        input.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>

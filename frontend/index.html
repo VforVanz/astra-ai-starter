@@ -1,0 +1,449 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ASTRA AI Cyber Defense Dashboard">
+  <title>ASTRA AI — Cyber Defense</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- CSS tambahan untuk AI Assistant -->
+  <style>
+    #assistant {
+      scroll-margin-top: 24px;
+    }
+
+    .astra-chat-panel {
+      overflow: hidden;
+    }
+    .traffic-panel { margin-top: 22px; padding: 22px; }
+    .traffic-stats { margin-top: 16px; }
+    .traffic-stats .stat-card { min-height: 100px; }
+    .traffic-footnote { margin-top: 14px; color: var(--text-muted, #8da0b5); font-size: 12px; line-height: 1.6; }
+    .traffic-latest { display: grid; gap: 7px; margin-top: 14px; }
+    .traffic-row { display: grid; grid-template-columns: 90px minmax(0,1fr) 60px; gap: 10px; padding: 9px 11px; border: 1px solid var(--border-color, #263548); border-radius: 10px; font-size: 12px; }
+    .traffic-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .traffic-row .traffic-status { text-align: right; font-weight: 700; }
+    @media (max-width: 640px) { .traffic-panel { padding: 14px; } .traffic-row { grid-template-columns: 68px minmax(0,1fr) 42px; gap: 6px; } }
+
+    .astra-chat-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color, #263548);
+    }
+
+    .astra-chat-avatar {
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #06b6d4, #6366f1);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .astra-chat-heading {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .astra-chat-heading h3 {
+      margin: 0 0 5px;
+    }
+
+    .astra-chat-heading p {
+      margin: 0;
+    }
+
+    .astra-chat-online {
+      color: #22c55e;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .astra-chat-online::before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .astra-chat-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 300px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding: 22px;
+      scroll-behavior: smooth;
+    }
+
+    .astra-chat-message {
+      max-width: 85%;
+      padding: 13px 16px;
+      border: 1px solid var(--border-color, #263548);
+      border-radius: 14px;
+      line-height: 1.65;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .astra-chat-message.assistant {
+      align-self: flex-start;
+      background: var(--card-bg, #101d2d);
+    }
+
+    .astra-chat-message.user {
+      align-self: flex-end;
+      background: rgba(6, 182, 212, 0.12);
+      border-color: rgba(6, 182, 212, 0.35);
+    }
+
+    .astra-chat-message .message-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--accent-cyan, #06b6d4);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .astra-chat-message.user .message-label {
+      color: inherit;
+      opacity: 0.8;
+    }
+
+    .astra-chat-composer {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 16px;
+      border-top: 1px solid var(--border-color, #263548);
+    }
+
+    .astra-chat-composer textarea {
+      flex: 1;
+      min-width: 0;
+      min-height: 48px;
+      max-height: 140px;
+      resize: vertical;
+      padding: 13px 15px;
+      border: 1px solid var(--border-color, #263548);
+      border-radius: 12px;
+      background: var(--input-bg, #0b1421);
+      color: inherit;
+      font: inherit;
+      line-height: 1.5;
+    }
+
+    .astra-chat-composer textarea:focus {
+      outline: 2px solid rgba(6, 182, 212, 0.45);
+      outline-offset: 1px;
+    }
+
+    .astra-chat-send {
+      min-height: 48px;
+      padding: 0 20px;
+      border: 0;
+      border-radius: 12px;
+      background: #0891b2;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .astra-chat-send:hover {
+      background: #0e7490;
+    }
+
+    .astra-chat-send:disabled {
+      cursor: wait;
+      opacity: 0.6;
+    }
+
+    .astra-chat-status {
+      min-height: 20px;
+      margin: 0;
+      padding: 0 18px 12px;
+      color: var(--text-muted, #94a3b8);
+      font-size: 12px;
+    }
+
+    .astra-chat-note {
+      margin: 0;
+      padding: 0 18px 16px;
+      color: var(--text-muted, #94a3b8);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+      .astra-chat-header {
+        padding: 15px;
+      }
+
+      .astra-chat-messages {
+        min-height: 260px;
+        max-height: 400px;
+        padding: 14px;
+      }
+
+      .astra-chat-message {
+        max-width: 94%;
+      }
+
+      .astra-chat-composer {
+        padding: 12px;
+        gap: 8px;
+      }
+
+      .astra-chat-send {
+        padding: 0 13px;
+      }
+    }
+  
+    .astra-quick-prompts{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px 0}
+    .astra-quick-prompts button{border:1px solid rgba(57,230,208,.14);background:rgba(57,230,208,.045);color:#9fb8c9;border-radius:999px;padding:7px 10px;font-size:11px;cursor:pointer;transition:.18s}
+    .astra-quick-prompts button:hover{color:#eafcff;border-color:rgba(57,230,208,.35);background:rgba(57,230,208,.08);transform:translateY(-1px)}
+</style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">A</div>
+        <div>
+          <strong>ASTRA AI</strong>
+          <span>Cyber Defense</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section-label">SECURITY OPERATIONS</div>
+      <nav class="nav">
+        <a class="nav-link active" href="#overview" data-section="overview"><span>▦</span> Overview</a>
+        <a class="nav-link" href="#alerts" data-section="alerts"><span>◉</span> Threat Monitoring</a>
+        <a class="nav-link" href="#analysis" data-section="analysis"><span>⌁</span> Incident Analysis</a>
+        <a class="nav-link" href="#assistant" data-section="assistant"><span>✦</span> AI Assistant</a>
+      </nav>
+
+      <div class="sidebar-status">
+        <div class="status-title"><span class="pulse-dot"></span> SYSTEM ONLINE</div>
+        <div class="status-row"><span>API</span><b id="apiStatus">Checking</b></div>
+        <div class="status-row"><span>DETECTOR</span><b>ACTIVE</b></div>
+        <div class="status-row"><span>MODE</span><b>LOCAL</b></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="mobile-menu" id="menuBtn" aria-label="Buka menu">☰</button>
+        <div>
+          <div class="eyebrow">SECURITY OPERATIONS CENTER</div>
+          <h1>ASTRA Command Center</h1>
+          <p class="subtitle">Pantau ancaman, pahami insiden, dan ambil tindakan dengan cepat.</p>
+        </div>
+        <div class="top-actions">
+          <div class="last-update"><span class="live-dot"></span><span id="lastUpdated">Belum diperbarui</span></div>
+          <button class="btn btn-primary" id="refreshBtn">↻ Refresh</button>
+          <div class="user-menu" id="userMenu">
+            <button class="user-button" id="userButton" aria-expanded="false">
+              <span class="avatar" id="userAvatar">M</span>
+              <span class="user-meta"><b id="userName">Member</b><small id="userRole">Member</small></span>
+              <span class="chevron">⌄</span>
+            </button>
+            <div class="user-dropdown" id="userDropdown">
+              <a href="profile.html">Profil Member</a>
+              <button id="logoutBtn">Keluar</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="connection-banner" id="connectionStatus">
+        <span class="banner-icon">◌</span>
+        <span>Menghubungkan ke backend ASTRA AI...</span>
+      </div>
+
+      <section id="overview" class="section">
+        <div class="section-heading">
+          <div>
+            <h2>Security Overview</h2>
+            <p class="muted">Ringkasan kondisi keamanan saat ini.</p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card accent-cyan">
+            <div class="stat-icon">◉</div>
+            <div class="stat-content"><span>Total Alerts</span><strong id="totalAlerts">—</strong><small>Semua temuan</small></div>
+          </article>
+          <article class="stat-card accent-red">
+            <div class="stat-icon">!</div>
+            <div class="stat-content"><span>High Risk</span><strong id="highRisk">—</strong><small>Perlu perhatian</small></div>
+          </article>
+          <article class="stat-card accent-orange">
+            <div class="stat-icon">◷</div>
+            <div class="stat-content"><span>Open Incidents</span><strong id="openIncidents">—</strong><small>Belum ditutup</small></div>
+          </article>
+          <article class="stat-card accent-purple">
+            <div class="stat-icon">↯</div>
+            <div class="stat-content"><span>Events Processed</span><strong id="eventsIngested">—</strong><small>Event terdeteksi</small></div>
+          </article>
+        </div>
+
+        <div class="overview-grid">
+          <section class="panel severity-panel">
+            <div class="panel-title"><div><h3>Threat Severity</h3><p class="muted">Distribusi tingkat risiko alert.</p></div><span class="tag">LIVE</span></div>
+            <div class="severity-layout">
+              <div class="severity-ring" id="severityRing"><div><strong id="severityTotal">0</strong><span>alert</span></div></div>
+              <div class="severity-list">
+                <div class="severity-item"><span><i class="severity-dot critical"></i> Critical</span><b id="criticalCount">0</b></div>
+                <div class="severity-item"><span><i class="severity-dot high"></i> High</span><b id="highCount">0</b></div>
+                <div class="severity-item"><span><i class="severity-dot medium"></i> Medium</span><b id="mediumCount">0</b></div>
+                <div class="severity-item"><span><i class="severity-dot low"></i> Low</span><b id="lowCount">0</b></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel health-panel">
+            <div class="panel-title"><div><h3>System Health</h3><p class="muted">Komponen monitoring ASTRA AI.</p></div></div>
+            <div class="health-list">
+              <div class="health-row"><span><i class="health-icon">✓</i> Backend API</span><strong id="healthApi">Checking</strong></div>
+              <div class="health-row"><span><i class="health-icon">✓</i> Threat Detector</span><strong class="online">Active</strong></div>
+              <div class="health-row"><span><i class="health-icon">✓</i> Alert Engine</span><strong class="online">Running</strong></div>
+              <div class="health-row"><span><i class="health-icon">✓</i> Data Mode</span><strong class="online">Local</strong></div>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel traffic-panel" aria-labelledby="trafficTitle">
+          <div class="panel-title"><div><h3 id="trafficTitle">Live Web Traffic</h3><p class="muted">Ringkasan request HTTP dari log yang dikirim ke ASTRA AI.</p></div><span class="tag">LOCAL LOGS</span></div>
+          <div class="stats-grid traffic-stats">
+            <article class="stat-card accent-cyan"><div class="stat-content"><span>Requests · 1 menit</span><strong id="trafficMinute">—</strong><small>Request tercatat</small></div></article>
+            <article class="stat-card accent-purple"><div class="stat-content"><span>Requests · 5 menit</span><strong id="trafficFive">—</strong><small>Total request</small></div></article>
+            <article class="stat-card accent-orange"><div class="stat-content"><span>Unique Sources</span><strong id="trafficSources">—</strong><small>5 menit terakhir</small></div></article>
+            <article class="stat-card accent-red"><div class="stat-content"><span>HTTP Errors</span><strong id="trafficErrors">—</strong><small>Respons 4xx / 5xx</small></div></article>
+          </div>
+          <div class="traffic-footnote" id="trafficNote">Menunggu data trafik. Astra memantau log yang dikirim, bukan otomatis menangkap semua trafik jaringan.</div>
+          <div class="traffic-latest" id="trafficLatest"></div>
+        </section>
+      </section>
+
+      <section id="alerts" class="section">
+        <section class="panel">
+          <div class="panel-title monitoring-title">
+            <div><h3>Threat Monitoring</h3><p class="muted">Temuan terbaru dari mesin deteksi ASTRA AI.</p></div>
+            <span class="count-badge" id="alertCount">0 alerts</span>
+          </div>
+
+          <div class="toolbar">
+            <div class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Cari IP, event, bukti, atau status..."></div>
+            <select id="riskFilter"><option value="all">Semua risiko</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+            <select id="statusFilter"><option value="all">Semua status</option><option value="open">Open</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option></select>
+          </div>
+
+          <div id="alertMessage" class="table-message">Memuat alert...</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>WAKTU</th><th>SUMBER</th><th>KEJADIAN</th><th>RISIKO</th><th>STATUS</th><th>BUKTI</th><th></th></tr></thead>
+              <tbody id="alertsTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="analysis" class="section">
+        <div class="section-heading"><div><h2>Incident Analysis</h2><p class="muted">Pilih alert untuk memahami konteks dan prioritas penanganannya.</p></div></div>
+        <section class="analysis-grid">
+          <div class="panel detail-panel" id="alertDetail"><div class="empty-state"><div class="empty-icon">⌁</div><h3>Belum ada alert dipilih</h3><p>Klik salah satu baris pada Threat Monitoring untuk melihat detail insiden.</p></div></div>
+          <div class="panel recommendation-panel">
+            <div class="panel-title"><div><h3>ASTRA Assessment</h3><p class="muted">Insight berbasis rule deteksi saat ini.</p></div><span class="ai-badge">AI</span></div>
+            <div id="assessmentContent" class="assessment-empty">Pilih alert untuk melihat assessment.</div>
+          </div>
+        </section>
+      </section>
+
+      <!-- PANEL BARU: ASTRA AI CHAT -->
+      <section id="assistant" class="section">
+        <div class="section-heading">
+          <div>
+            <h2>ASTRA AI Assistant</h2>
+            <p class="muted">Berinteraksi langsung dengan model AI lokal kamu.</p>
+          </div>
+        </div>
+
+        <section class="panel astra-chat-panel">
+          <div class="astra-chat-header">
+            <div class="astra-chat-avatar">A</div>
+            <div class="astra-chat-heading">
+              <h3>ASTRA AI</h3>
+              <p class="muted">Local AI Assistant · Ollama</p>
+            </div>
+            <span class="astra-chat-online">Local</span>
+          </div>
+
+          <div
+            id="astraChatMessages"
+            class="astra-chat-messages"
+            role="log"
+            aria-live="polite"
+            aria-label="Percakapan dengan ASTRA AI"
+          >
+            <div class="astra-chat-message assistant">
+              <span class="message-label">ASTRA AI</span>
+              Halo! Saya ASTRA AI. Backend kamu sudah siap. Silakan kirim pesan untuk memulai percakapan.
+            </div>
+          </div>
+
+          <div class="astra-quick-prompts" aria-label="Contoh pertanyaan cepat">
+            <button type="button" data-prompt="Ringkas kondisi keamanan saat ini">Security summary</button>
+            <button type="button" data-prompt="Jelaskan alert risiko tinggi">Analisis alert</button>
+            <button type="button" data-prompt="Apa yang perlu saya periksa sekarang?">Next action</button>
+          </div>
+
+          <form id="astraChatForm" class="astra-chat-composer">
+            <textarea
+              id="astraChatInput"
+              rows="1"
+              maxlength="10000"
+              placeholder="Tulis pesan untuk ASTRA AI..."
+              aria-label="Pesan untuk ASTRA AI"
+              required
+            ></textarea>
+            <button id="astraChatSend" class="astra-chat-send" type="submit">
+              Kirim ↗
+            </button>
+          </form>
+
+          <p id="astraChatStatus" class="astra-chat-status" role="status">
+            Siap menerima pesan.
+          </p>
+
+          <p class="astra-chat-note">
+            Pesan dikirim ke backend lokal Flask dan diproses oleh Ollama.
+            Jangan masukkan kata sandi atau informasi rahasia.
+          </p>
+        </section>
+      </section>
+
+      <footer>ASTRA AI · Cyber Defense Platform · Local monitoring</footer>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

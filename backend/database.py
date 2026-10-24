@@ -139,3 +139,64 @@ def dashboard_summary() -> dict[str, int]:
         "open_incidents": open_incidents,
         "events_ingested": events,
     }
+
+
+def traffic_summary() -> dict[str, Any]:
+    """Summarize recent HTTP request events stored in the local SQLite database."""
+    from collections import Counter
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+    cutoff_minute = (now - timedelta(minutes=1)).isoformat()
+    cutoff_five = (now - timedelta(minutes=5)).isoformat()
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT timestamp, source_ip, raw_json FROM events WHERE event_type = 'http_request' ORDER BY timestamp DESC LIMIT 2000"
+        ).fetchall()
+
+    recent_minute = []
+    recent_five = []
+    statuses = []
+    paths = Counter()
+    sources = set()
+    latest = []
+    for row in rows:
+        try:
+            event = json.loads(row["raw_json"])
+        except (TypeError, json.JSONDecodeError):
+            event = {}
+        ts = str(row["timestamp"])
+        try:
+            parsed = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+        if parsed >= now - timedelta(minutes=5):
+            recent_five.append(row)
+            sources.add(row["source_ip"])
+            path = str(event.get("path", "/"))[:200]
+            paths[path] += 1
+            status = event.get("status_code")
+            try:
+                if int(status) >= 400:
+                    statuses.append(int(status))
+            except (TypeError, ValueError):
+                pass
+        if parsed >= now - timedelta(minutes=1):
+            recent_minute.append(row)
+        if len(latest) < 8:
+            latest.append({
+                "timestamp": ts, "source_ip": row["source_ip"],
+                "method": str(event.get("method", "-")), "path": str(event.get("path", "-"))[:200],
+                "status_code": event.get("status_code", "-"),
+            })
+    return {
+        "requests_last_minute": len(recent_minute),
+        "requests_last_5_minutes": len(recent_five),
+        "unique_sources_last_5_minutes": len(sources),
+        "http_errors_last_5_minutes": len(statuses),
+        "top_paths": [{"path": path, "count": count} for path, count in paths.most_common(5)],
+        "latest_requests": latest,
+        "source": "local SQLite event logs",
+    }
