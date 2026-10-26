@@ -165,6 +165,28 @@ async function loadDashboard() {
   }
 }
 
+function showSection(sectionId, updateHash = true) {
+  const allowedSections = ["overview", "alerts", "analysis", "assistant"];
+  const targetId = allowedSections.includes(sectionId) ? sectionId : "overview";
+
+  document.querySelectorAll("main.main > .section").forEach(section => {
+    section.classList.toggle("active", section.id === targetId);
+  });
+
+  document.querySelectorAll(".nav-link").forEach(link => {
+    const isActive = link.dataset.section === targetId;
+    link.classList.toggle("active", isActive);
+    if (isActive) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  });
+
+  if (updateHash && window.location.hash !== `#${targetId}`) {
+    history.replaceState(null, "", `#${targetId}`);
+  }
+
+  $("sidebar")?.classList.remove("open");
+}
+
 async function selectAlert(id) {
   const local = alerts.find(a => a.id === id);
   if (!local) return;
@@ -193,15 +215,21 @@ async function selectAlert(id) {
       output.textContent = `Analisis gagal: ${err.message}. Pastikan Ollama aktif dan model llama3.2:latest tersedia.`;
     } finally { btn.disabled = false; btn.textContent = "Analisis ulang dengan Ollama"; }
   });
-  document.querySelector("#analysis")?.scrollIntoView({behavior:"smooth", block:"start"});
+  showSection("analysis");
 }
 
 function setupNavigation() {
-  document.querySelectorAll(".nav-link").forEach(link => link.addEventListener("click", () => {
-    document.querySelectorAll(".nav-link").forEach(x => x.classList.remove("active"));
-    link.classList.add("active");
-    $("sidebar")?.classList.remove("open");
+  document.querySelectorAll(".nav-link").forEach(link => link.addEventListener("click", (event) => {
+    event.preventDefault();
+    showSection(link.dataset.section);
   }));
+  const initialSection = window.location.hash.slice(1);
+  showSection(initialSection || "overview", false);
+
+  window.addEventListener("hashchange", () => {
+    showSection(window.location.hash.slice(1), false);
+  });
+
   $("menuBtn")?.addEventListener("click", () => $("sidebar")?.classList.toggle("open"));
   ["searchInput","riskFilter","statusFilter"].forEach(id => $(id)?.addEventListener("input", renderAlerts));
   $("refreshBtn")?.addEventListener("click", async () => {
