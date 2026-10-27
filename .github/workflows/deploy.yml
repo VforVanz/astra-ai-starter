@@ -1,0 +1,27 @@
+
+name: Astra AI Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test-runner:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify runner
+        run: |
+          echo "Astra AI self-hosted runner aktif!"
+          echo "Branch: $GITHUB_REF_NAME"
+          echo "Commit: $GITHUB_SHA"
+          test -f backend/app.py
+          test -f frontend/index.html
+          echo "Struktur project berhasil diperiksa."
+
