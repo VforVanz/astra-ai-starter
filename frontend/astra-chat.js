@@ -6,7 +6,7 @@
    API: POST /api/chat
    ========================================== */
 
-const ASTRA_CHAT_API = "http://127.0.0.1:5000/api/chat";
+const ASTRA_CHAT_API = "/api/chat";
 const ASTRA_CHAT_HISTORY_LIMIT = 12;
 
 let astraChatHistory = [];

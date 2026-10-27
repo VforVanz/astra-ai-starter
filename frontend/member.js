@@ -7,7 +7,7 @@
    ========================================== */
 
 const SESSION_KEY = "astra_session";
-const API_BASE = "http://127.0.0.1:5000/api";
+const API_BASE = "/api";
 
 /* ==========================================
    APPLICATION STATE

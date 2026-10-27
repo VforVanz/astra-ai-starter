@@ -1,6 +1,6 @@
 "use strict";
 
-const API = "http://127.0.0.1:5000/api";
+const API = "/api";
 const SESSION_KEY = "astra_session";
 const CHAT_HISTORY_LIMIT = 6;
 const CHAT_TIMEOUT_MS = 45000;
